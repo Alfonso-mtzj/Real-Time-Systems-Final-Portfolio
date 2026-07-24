@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ThemePark Ride Safety & Dispatch Controller — ESP32-S3 and FreeRTOS portfolio project by Alfonso Martinez.">
+  <title>ThemePark Ride Safety & Dispatch Controller</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero" id="top">
+    <nav class="nav container">
+      <a class="brand" href="#top">ThemePark RTS</a>
+      <div class="nav-links">
+        <a href="#overview">Overview</a>
+        <a href="#demo">Demo</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#performance">WCET</a>
+        <a href="#hazards">Hazards</a>
+        <a href="#links">Links</a>
+      </div>
+    </nav>
+
+    <div class="hero-content container">
+      <p class="eyebrow">ESP32-S3 • FreeRTOS • Real-Time Systems</p>
+      <h1>ThemePark Ride Safety &amp; Dispatch Controller</h1>
+      <p class="hero-text">
+        A dual-core embedded system that monitors simulated ride conditions,
+        coordinates task execution, responds to emergency-stop events, measures
+        runtime latency, and demonstrates watchdog-based fault detection.
+      </p>
+
+      <div class="hero-actions">
+        <a class="button primary" href="https://wokwi.com/projects/470398990653018113" target="_blank" rel="noopener">Run in Wokwi</a>
+        <a class="button secondary" href="https://github.com/Alfonso-mtzj/Real-Time-Systems-Final-Portfolio" target="_blank" rel="noopener">View GitHub Repo</a>
+      </div>
+
+      <div class="project-meta">
+        <span><strong>Student:</strong> Alfonso Martinez</span>
+        <span><strong>Course:</strong> Real-Time Systems</span>
+        <span><strong>Term:</strong> Summer 2026</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section container" id="overview">
+      <div class="section-heading">
+        <p class="eyebrow">Project overview</p>
+        <h2>One coherent real-time ride-control system</h2>
+      </div>
+
+      <div class="two-column">
+        <div>
+          <p>
+            The ThemePark Ride Safety &amp; Dispatch Controller simulates the control
+            system for a theme park ride. Sensor data is generated, transferred through
+            a queue, evaluated by a safety controller, and coordinated using FreeRTOS
+            synchronization primitives.
+          </p>
+          <p>
+            The real-time pipeline runs on Core 1 while monitoring and observability run
+            on Core 0. This separation keeps serial output and optional web monitoring
+            from interfering with time-sensitive ride-control tasks.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Key capabilities</h3>
+          <ul class="check-list">
+            <li>Queue-based sensor pipeline</li>
+            <li>Event-group synchronization</li>
+            <li>ISR-to-task direct notification</li>
+            <li>Binary semaphore latency comparison</li>
+            <li>Mutex-protected shared state</li>
+            <li>Heartbeat watchdog and fault injection</li>
+            <li>WCET and latency measurements</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section dark-section" id="demo">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Demo video</p>
+          <h2>3–5 minute system walkthrough</h2>
+          <p class="section-intro">
+            After uploading your demo to YouTube, replace <code>YOUR_VIDEO_ID</code>
+            in <code>index.html</code> with the video ID.
+          </p>
+        </div>
+
+        <div class="video-wrap">
+          <iframe
+            src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
+            title="ThemePark Ride Safety & Dispatch Controller demo"
+            loading="lazy"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container" id="architecture">
+      <div class="section-heading">
+        <p class="eyebrow">System architecture</p>
+        <h2>Dual-core task organization</h2>
+      </div>
+
+      <div class="architecture-grid">
+        <div class="core-card">
+          <h3>Core 1 — Real-Time Pipeline</h3>
+          <div class="flow">
+            <div class="node">Ride Sensor Task</div>
+            <div class="arrow">↓ Queue</div>
+            <div class="node">Safety Controller</div>
+            <div class="arrow">↓ Event Group</div>
+            <div class="node">Ride Coordinator</div>
+            <div class="arrow">↓ Task Notification</div>
+            <div class="node">Emergency Responder</div>
+          </div>
+          <div class="interrupt-path">
+            <strong>Button ISR</strong>
+            <span>→ Direct Task Notification</span>
+            <span>→ Binary Semaphore comparison</span>
+          </div>
+        </div>
+
+        <div class="core-card">
+          <h3>Core 0 — Monitoring Plane</h3>
+          <div class="monitor-list">
+            <div class="node">Serial Monitor</div>
+            <div class="node">Optional Web Dashboard</div>
+            <div class="node">Heartbeat Watchdog</div>
+          </div>
+          <p>
+            Moving observability to Core 0 reduces interference with the real-time
+            pipeline and makes task behavior easier to inspect during testing.
+          </p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Task</th><th>Core</th><th>Role</th><th>Synchronization</th></tr></thead>
+          <tbody>
+            <tr><td>Ride Sensor</td><td>1</td><td>Generates simulated ride data</td><td>Queue</td></tr>
+            <tr><td>Safety Controller</td><td>1</td><td>Evaluates safety conditions</td><td>Queue, mutex, event group</td></tr>
+            <tr><td>Ride Coordinator</td><td>1</td><td>Coordinates processing stages</td><td>Event group</td></tr>
+            <tr><td>Emergency Responder</td><td>1</td><td>Handles emergency-stop events</td><td>Direct task notification</td></tr>
+            <tr><td>Semaphore Latency</td><td>1</td><td>Measures semaphore wake-up latency</td><td>Binary semaphore</td></tr>
+            <tr><td>Monitor / Watchdog</td><td>0</td><td>Reports health and detects stalled tasks</td><td>Heartbeat counters, mutex</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section accent-section" id="performance">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Timing evidence</p>
+          <h2>WCET and latency measurements</h2>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric-card"><span class="metric-value">50 ms</span><span class="metric-label">Producer period</span></div>
+          <div class="metric-card"><span class="metric-value">8</span><span class="metric-label">Queue depth</span></div>
+          <div class="metric-card"><span class="metric-value">25–40 µs</span><span class="metric-label">Notification latency</span></div>
+          <div class="metric-card"><span class="metric-value">800–1500 µs</span><span class="metric-label">Semaphore latency</span></div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Measured task</th><th>Observed WCET</th></tr></thead>
+            <tbody>
+              <tr><td>Producer</td><td>~35 µs</td></tr>
+              <tr><td>Consumer</td><td>~186 µs</td></tr>
+              <tr><td>Coordinator</td><td>~81 µs</td></tr>
+              <tr><td>Responder</td><td>~1300 µs</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="callout">
+          Direct task notifications consistently produced lower wake-up latency than
+          binary semaphores, so they were selected as the primary emergency ISR-to-task path.
+        </p>
+      </div>
+    </section>
+
+    <section class="section container" id="evidence">
+      <div class="section-heading">
+        <p class="eyebrow">Runtime evidence</p>
+        <h2>Normal, emergency, and fault-injection behavior</h2>
+      </div>
+
+      <div class="screenshot-grid">
+        <figure class="shot-card">
+          <img src="https://github.com/user-attachments/assets/275a1efc-1b31-4979-91bc-d515618eeac5" alt="Normal system operation">
+          <figcaption><strong>Normal operation:</strong> heartbeats increase while the ride transitions between RUNNING and WARNING.</figcaption>
+        </figure>
+
+        <figure class="shot-card">
+          <img src="https://github.com/user-attachments/assets/23072927-e066-493c-9cc4-cfddef0b7efb" alt="Emergency stop output">
+          <figcaption><strong>Emergency stop:</strong> the ISR wakes the responder and displays latency measurements.</figcaption>
+        </figure>
+
+        <figure class="shot-card">
+          <img src="https://github.com/user-attachments/assets/262f906a-50e1-477f-8836-e6c552cbd514" alt="Fault injection output">
+          <figcaption><strong>Fault injection:</strong> the safety controller intentionally stalls for five seconds.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section hazard-section" id="hazards">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Hazard analysis</p>
+          <h2>Failure risks and mitigations</h2>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Hazard</th><th>Cause</th><th>Effect</th><th>Mitigation</th></tr></thead>
+            <tbody>
+              <tr><td>Unsafe ride dispatch</td><td>Dangerous sensor condition</td><td>Ride could operate outside safe limits</td><td>Safety controller evaluates data before coordination</td></tr>
+              <tr><td>Lost emergency request</td><td>Slow or blocked signaling path</td><td>Delayed emergency response</td><td>Direct task notification provides low-latency ISR signaling</td></tr>
+              <tr><td>Shared-state corruption</td><td>Concurrent reads and writes</td><td>Incorrect ride state</td><td>Mutex protects shared ride information</td></tr>
+              <tr><td>Task stall</td><td>Software defect or blocked task</td><td>Pipeline stops progressing</td><td>Heartbeat watchdog reports a FAULT condition</td></tr>
+              <tr><td>Monitoring interference</td><td>Serial or web output delays control</td><td>Timing jitter</td><td>Monitoring runs separately on Core 0</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="standards-note">
+          <strong>Industry mapping:</strong> This educational project demonstrates
+          hazard identification, fault injection, fail-safe reporting, timing evidence,
+          and separation between monitoring and real-time control.
+        </p>
+      </div>
+    </section>
+
+    <section class="section container" id="portfolio">
+      <div class="section-heading">
+        <p class="eyebrow">Recruiter-facing summary</p>
+        <h2>Engineering skills demonstrated</h2>
+      </div>
+
+      <div class="skills-grid">
+        <div class="skill-card"><h3>Embedded C</h3><p>Implemented task logic, GPIO interrupts, timing instrumentation, and protected shared state.</p></div>
+        <div class="skill-card"><h3>Real-time design</h3><p>Selected synchronization primitives based on latency, ownership, and communication pattern.</p></div>
+        <div class="skill-card"><h3>System integration</h3><p>Combined Apps 1–5 concepts into one themed dual-core application.</p></div>
+        <div class="skill-card"><h3>Verification</h3><p>Collected WCET, latency, heartbeat, emergency-stop, and fault-injection evidence.</p></div>
+      </div>
+    </section>
+
+    <section class="section links-section" id="links">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Project links</p>
+          <h2>Explore the full project</h2>
+        </div>
+
+        <div class="link-grid">
+          <a class="link-card" href="https://wokwi.com/projects/470398990653018113" target="_blank" rel="noopener"><span>Wokwi</span><strong>Run the live simulation →</strong></a>
+          <a class="link-card" href="https://github.com/Alfonso-mtzj/Real-Time-Systems-Final-Portfolio" target="_blank" rel="noopener"><span>GitHub</span><strong>View source code and README →</strong></a>
+          <a class="link-card" href="README.md"><span>Documentation</span><strong>Open the full README →</strong></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-content">
+      <p>Built by Alfonso Martinez for Real-Time Systems — Summer 2026.</p>
+      <a href="#top">Back to top ↑</a>
+    </div>
+  </footer>
+</body>
+</html>
